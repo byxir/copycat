@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosResponse } from "axios";
+import axios, { AxiosInstance } from "axios";
 
 export const baseUrl = "https://tgshka-back.testbotbot.site";
 // export const socketBaseUrl = "wss://back.alotprojectb.sitetrade/socket";
@@ -16,3 +16,5 @@ const axiosInstance: AxiosInstance = axios.create({
     Authorization: initData,
   },
 });
+
+console.log(axiosInstance);
