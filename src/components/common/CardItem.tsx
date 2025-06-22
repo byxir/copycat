@@ -28,7 +28,17 @@ export const CardItem = ({ card, onEdit }: CardItemProps) => {
   };
 
   const getTitle = () => {
-    return card.title || card.content.split("\n")[0] || "Untitled";
+    if (card.title) return card.title;
+
+    const firstLine = card.content.trim().split("\n")[0];
+    // Remove markdown formatting from first line for cleaner title
+    return (
+      firstLine
+        .replace(/^#+\s*/, "")
+        .replace(/\*\*/g, "")
+        .replace(/\*/g, "")
+        .trim() || "Untitled"
+    );
   };
 
   const getPreviewContent = () => {
@@ -46,10 +56,10 @@ export const CardItem = ({ card, onEdit }: CardItemProps) => {
       exit={{ opacity: 0, y: -20 }}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
-      className="relative cursor-pointer group"
+      className="relative h-full cursor-pointer group"
       onClick={handleCopy}
     >
-      <div className="relative overflow-hidden rounded-3xl bg-card/80 backdrop-blur-sm border border-border/50 p-8 min-h-[280px] transition-all duration-300 hover:border-border hover:bg-card/90">
+      <div className="relative overflow-hidden rounded-3xl bg-card/80 backdrop-blur-sm border border-border/50 p-8 h-[280px] transition-all duration-300 hover:border-border hover:bg-card/90">
         {/* Enhanced gradient glow effect */}
         <div
           className={`absolute inset-x-0 bottom-0 h-full bg-gradient-to-t ${card.gradient} opacity-40 group-hover:opacity-40 transition-opacity duration-300`}

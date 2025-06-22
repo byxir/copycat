@@ -13,6 +13,7 @@ import {
   Code,
   List,
 } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface MarkdownEditorProps {
   value: string;
@@ -123,7 +124,12 @@ export const MarkdownEditor = ({
   }, [value]);
 
   return (
-    <div className={`flex relative flex-col h-full ${className}`}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className={`flex relative flex-col h-full ${className}`}
+    >
       {/* Persistent Toolbar */}
       <div className="flex justify-between items-center p-3 rounded-t-lg border backdrop-blur-sm bg-background/95 border-border shrink-0">
         <div className="flex gap-1 items-center">
@@ -246,6 +252,6 @@ export const MarkdownEditor = ({
           />
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };

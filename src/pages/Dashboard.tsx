@@ -19,6 +19,19 @@ export const Dashboard = () => {
   const [content, setContent] = useState("");
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
 
+  // Helper function to generate title from content
+  const generateTitleFromContent = (content: string) => {
+    const firstLine = content.trim().split("\n")[0];
+    // Remove markdown formatting from first line for cleaner title
+    return (
+      firstLine
+        .replace(/^#+\s*/, "")
+        .replace(/\*\*/g, "")
+        .replace(/\*/g, "")
+        .trim() || "Untitled"
+    );
+  };
+
   // Load cards from IndexedDB
   const loadCards = useCallback(async () => {
     try {
@@ -41,15 +54,48 @@ export const Dashboard = () => {
     try {
       const trimmedTitle = title.trim();
 
-      // Check for duplicate titles when creating new card or when editing and title changed
-      if (trimmedTitle) {
-        const existingCard = await db.cards
-          .where("title")
-          .equals(trimmedTitle)
+      // Generate title from first line if no title provided
+      const finalTitle = trimmedTitle || generateTitleFromContent(content);
+
+      // For new cards without an ID, check if we already have a card with the same content
+      // to prevent duplicate creation
+      if (!editingCard?.id) {
+        // Check for existing card with same content (to prevent duplicates when no title)
+        const existingCardByContent = await db.cards
+          .where("content")
+          .equals(content.trim())
           .first();
 
-        // If we found a card with the same title and it's not the card we're currently editing
-        if (existingCard && existingCard.id !== editingCard?.id) {
+        if (existingCardByContent) {
+          // Update the existing card instead of creating a new one
+          setEditingCard(existingCardByContent);
+          setTitle(existingCardByContent.title);
+          toast.info("Updating existing card");
+          return;
+        }
+
+        // Check for existing card with the same title
+        const existingCardByTitle = await db.cards
+          .where("title")
+          .equals(finalTitle)
+          .first();
+
+        if (existingCardByTitle) {
+          // Update the existing card instead of creating a new one
+          setEditingCard(existingCardByTitle);
+          setTitle(existingCardByTitle.title);
+          setContent(existingCardByTitle.content);
+          toast.info("Updating existing card with same title");
+          return;
+        }
+      } else {
+        // For existing cards, check for duplicate titles (excluding current card)
+        const existingCard = await db.cards
+          .where("title")
+          .equals(finalTitle)
+          .first();
+
+        if (existingCard && existingCard.id !== editingCard.id) {
           toast.error("A card with this title already exists");
           return;
         }
@@ -57,7 +103,7 @@ export const Dashboard = () => {
 
       const now = new Date().toISOString();
       const cardData = {
-        title: trimmedTitle,
+        title: finalTitle,
         content: content.trim(),
         gradient: editingCard?.gradient || getRandomGradient(),
         createdAt: editingCard?.createdAt || now,
@@ -68,7 +114,13 @@ export const Dashboard = () => {
         await db.cards.update(editingCard.id, cardData);
         toast.success("Card updated");
       } else {
-        await db.cards.add(cardData);
+        const newCardId = await db.cards.add(cardData);
+        // Set the editing card to the newly created card to prevent further duplicates
+        const newCard = await db.cards.get(newCardId);
+        if (newCard) {
+          setEditingCard(newCard);
+          setTitle(newCard.title);
+        }
         toast.success("Card created");
       }
 
