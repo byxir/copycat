@@ -1,0 +1,1 @@
+// All TypeScript types - empty file as per specification
