@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Edit3, Copy } from "lucide-react";
+import { Edit3, Copy, Trash2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Card } from "@/lib/database";
@@ -10,9 +10,10 @@ import { toast } from "sonner";
 interface CardItemProps {
   card: Card;
   onEdit: (card: Card) => void;
+  onDelete: (card: Card) => void;
 }
 
-export const CardItem = ({ card, onEdit }: CardItemProps) => {
+export const CardItem = ({ card, onEdit, onDelete }: CardItemProps) => {
   const handleCopy = async () => {
     const success = await copyToClipboard(card.content);
     if (success) {
@@ -25,6 +26,11 @@ export const CardItem = ({ card, onEdit }: CardItemProps) => {
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     onEdit(card);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete(card);
   };
 
   const getTitle = () => {
@@ -71,14 +77,24 @@ export const CardItem = ({ card, onEdit }: CardItemProps) => {
             <h3 className="flex-1 pr-4 text-xl font-bold truncate text-foreground">
               {getTitle()}
             </h3>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="w-10 h-10 opacity-0 transition-opacity group-hover:opacity-100 shrink-0 hover:bg-background/20"
-              onClick={handleEdit}
-            >
-              <Edit3 className="w-5 h-5" />
-            </Button>
+            <div className="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100 shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-10 h-10 hover:bg-background/20"
+                onClick={handleEdit}
+              >
+                <Edit3 className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-10 h-10 hover:bg-destructive/20 hover:text-destructive"
+                onClick={handleDelete}
+              >
+                <Trash2 className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
 
           <div className="overflow-hidden flex-1">

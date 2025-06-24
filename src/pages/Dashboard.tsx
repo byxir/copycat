@@ -9,6 +9,16 @@ import { AddCard } from "@/components/common/AddCard";
 import { MarkdownEditor } from "@/components/common/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 export const Dashboard = () => {
@@ -18,6 +28,7 @@ export const Dashboard = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [cardToDelete, setCardToDelete] = useState<Card | null>(null);
 
   // Helper function to generate title from content
   const generateTitleFromContent = (content: string) => {
@@ -171,6 +182,27 @@ export const Dashboard = () => {
     setContent("");
   };
 
+  const handleDeleteCard = async (card: Card) => {
+    setCardToDelete(card);
+  };
+
+  const confirmDeleteCard = async () => {
+    if (!cardToDelete) return;
+
+    try {
+      if (cardToDelete.id) {
+        await db.cards.delete(cardToDelete.id);
+        toast.success("Card deleted");
+        await loadCards();
+      }
+    } catch (error) {
+      console.error("Failed to delete card:", error);
+      toast.error("Failed to delete card");
+    } finally {
+      setCardToDelete(null);
+    }
+  };
+
   if (isEditing) {
     return (
       <motion.div
@@ -248,11 +280,41 @@ export const Dashboard = () => {
 
           <AnimatePresence>
             {cards.map((card) => (
-              <CardItem key={card.id} card={card} onEdit={startEditing} />
+              <CardItem
+                key={card.id}
+                card={card}
+                onEdit={startEditing}
+                onDelete={handleDeleteCard}
+              />
             ))}
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!cardToDelete}
+        onOpenChange={() => setCardToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              card "{cardToDelete?.title}" and remove all its content.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteCard}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 };
